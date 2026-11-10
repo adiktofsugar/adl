@@ -19,7 +19,7 @@ import logging
 import sys
 import getpass
 
-from adl import login, epub_get, account, device, db, data
+from adl import login, epub_get, account, device, db, data, AdeptError, GetEbookException
 
 def adobe_login(args):
   password = None
@@ -106,5 +106,9 @@ else:
 logging.basicConfig(format='%(levelname)s:%(message)s', level=loglevel)
 
 # Call appropriate handler
-args.func(args)
+try:
+  args.func(args)
+except (AdeptError, GetEbookException) as e:
+  logging.error(e)
+  sys.exit(1)
 

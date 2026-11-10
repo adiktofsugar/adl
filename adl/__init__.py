@@ -1,3 +1,5 @@
+__version__ = "0.2.0"
+
 from .exceptions import (
   DataDirectoryAccessError,
   GetEbookException,
@@ -5,6 +7,16 @@ from .exceptions import (
   AdeptAuthFailedError,
   AdeptResetPWRequiredError,
 )
+
+__all__ = [
+  "__version__",
+  "data",
+  "DataDirectoryAccessError",
+  "GetEbookException",
+  "AdeptError",
+  "AdeptAuthFailedError",
+  "AdeptResetPWRequiredError",
+]
 from . import db
 
 data = db.DBData()

@@ -48,9 +48,11 @@ Login
 -----
 Use::
 
-  ./adl.py login -u <adobeID>
+  ./adl.py login -u <email>
 
 You only need to login once, to exchange encryption keys.
+
+Since June 23, 2026, Adobe ID sign-in is handled by ByteBooks (Wipro now runs Adobe's ebook services). The protocol and servers are unchanged, but the email and password must be those of a ByteBooks account. If your Adobe ID hasn't been moved over yet, sign-in fails until you set a new password at https://dtsbytebooks.com/transition-help, using the same email so your books carry over. Accounts with two-factor authentication turned on can't sign in this way.
 
 I recommend to login with an Adobe ID (which can be created on Adobe website). It is possible to login as Anonymous, but be aware that you may lose access to your book if something goes wrong during download. Also, you will not be able to download it again if you ever lose the private key (or if you use another client). With an Adobe ID, the keys and the books are attached to your account: you can login from somewhere else and get them back.
 As far as I understand, it is also possible to use other IDs to log in, but this is not supported yet.
@@ -91,3 +93,32 @@ Transfer the downloaded book to the device
 ------------------------------------------
 
 Not (yet ?) handled by adl, but you just have to copy it on the device's filesystem. On my readers, the books can be put anywhere.
+
+Using adl as a library
+======================
+
+``import adl`` creates and loads ``~/.adl``. The modules (``adl.login``, ``adl.epub_get``, ``adl.account``, ...) are what ``adl.py`` uses.
+
+Errors
+------
+
+When an Adobe server rejects a sign-in, ``adl.login.login`` raises instead of logging and returning. All of these can be imported from ``adl``:
+
+- ``AdeptError``: any error reply from the server. ``.code`` is the error code (e.g. ``E_AUTH_FAILED``) and ``.data`` the server's full error string. The message says what went wrong and, where possible, what to do about it.
+- ``AdeptAuthFailedError`` (``E_AUTH_FAILED``): wrong email or password, or two-factor authentication is on.
+- ``AdeptResetPWRequiredError`` (``E_ADEPT_RESET_PW_REQUIRED``): the Adobe ID hasn't been moved to ByteBooks yet.
+- ``GetEbookException``: ``epub_get.get_ebook`` couldn't download the book.
+
+For example::
+
+  import adl
+  from adl import login
+
+  try:
+    login.login(user, password)
+  except adl.AdeptResetPWRequiredError:
+    ...  # send the user to https://dtsbytebooks.com/transition-help
+  except adl.AdeptError as e:
+    print(e)
+
+See ``CHANGELOG.rst`` for changes that affect code using adl.
