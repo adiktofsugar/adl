@@ -5,6 +5,7 @@ import base64
 from lxml import etree
 
 from .xml_tools import ADEPT_NS, NSMAP, sign_xml, add_subelement, get_error
+from .exceptions import adept_error
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -243,13 +244,12 @@ class SignInDirect(APICall):
     if reply is None:
       return False, None, None, None, None
 
-    if 'error' in reply:
-      error = get_error(reply)
-      logger.error(error)
-      return False, None, None, None, None
+    error = get_error(reply)
+    if error is not None:
+      raise adept_error(error)
 
     tree_root = etree.fromstring(reply)
-    user = tree_root.find("{http://ns.adobe.com/adept}user").text
+    user =tree_root.find("{http://ns.adobe.com/adept}user").text
     pkcs12 = tree_root.find("{http://ns.adobe.com/adept}pkcs12").text
     epk = tree_root.find("{http://ns.adobe.com/adept}encryptedPrivateLicenseKey").text
     lcert = tree_root.find("{http://ns.adobe.com/adept}licenseCertificate").text

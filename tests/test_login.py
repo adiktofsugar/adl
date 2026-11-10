@@ -1,4 +1,4 @@
-from context import login, account, utils, db, data, bom
+from context import adl, login, account, utils, db, data, bom, api_call
 from unittest.mock import patch, MagicMock
 import unittest
 import base64
@@ -51,6 +51,32 @@ class TestLogin(unittest.TestCase):
       login.sign_in(data, a, None, None)
       self.assertEqual(a.urn, "urn:uuid:563084fa-6c5c-4489-b8a6-b9e053dcbb7c")
       mock_request.assert_called()
+
+  def _sign_in_error(self, data):
+    reply = '<error xmlns="http://ns.adobe.com/adept" data="%s"/>' % data
+    return api_call.SignInDirect("AdobeID", b"", ("", ""), ("", "")).parse(reply)
+
+  def test_sign_in_bad_password(self):
+    with self.assertRaises(adl.AdeptAuthFailedError) as cm:
+      self._sign_in_error("E_AUTH_FAILED http://adeactivate.adobe.com/adept/SignInDirect CUS05051")
+    self.assertEqual(cm.exception.code, "E_AUTH_FAILED")
+    self.assertIn("wrong email or password", str(cm.exception))
+
+  def test_sign_in_2fa(self):
+    with self.assertRaises(adl.AdeptAuthFailedError) as cm:
+      self._sign_in_error("E_AUTH_FAILED http://adeactivate.adobe.com/adept/SignInDirect LOGIN_FAILED")
+    self.assertIn("two-factor", str(cm.exception))
+
+  def test_sign_in_reset_pw_required(self):
+    with self.assertRaises(adl.AdeptResetPWRequiredError) as cm:
+      self._sign_in_error("E_ADEPT_RESET_PW_REQUIRED http://adeactivate.adobe.com/adept/SignInDirect")
+    self.assertIn("dtsbytebooks.com/transition-help", str(cm.exception))
+
+  def test_sign_in_unknown_error(self):
+    with self.assertRaises(adl.AdeptError) as cm:
+      self._sign_in_error("E_SOMETHING_NEW http://adeactivate.adobe.com/adept/SignInDirect")
+    self.assertIs(type(cm.exception), adl.AdeptError)
+    self.assertIn("E_SOMETHING_NEW", str(cm.exception))
 
 if __name__ == '__main__':
   unittest.main()

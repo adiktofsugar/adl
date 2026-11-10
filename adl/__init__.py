@@ -1,4 +1,10 @@
-from .exceptions import DataDirectoryAccessError
+from .exceptions import (
+  DataDirectoryAccessError,
+  GetEbookException,
+  AdeptError,
+  AdeptAuthFailedError,
+  AdeptResetPWRequiredError,
+)
 from . import db
 
 data = db.DBData()
